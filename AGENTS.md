@@ -1,427 +1,614 @@
-# OpenWitness — AI Agent Instructions
+# OpenWitness — Agent Instructions
 
-## Project
+## Purpose
 
-OpenWitness is a Bengali-first anonymous public-interest reporting platform for Bangladesh.
+OpenWitness is an anonymous public-interest incident reporting platform.
 
-Repository:
+The system prioritizes:
 
-https://github.com/farukislamyt/openwitness
+- Reporter privacy
+- Secure anonymous submission
+- Database integrity
+- Row Level Security
+- Moderated publication
+- Auditability
+- Minimal privileges
+- Explicit database migrations
 
-Developer / Maintainer:
-
-Faruk Islam
+Agents working on this repository must preserve these principles.
 
 ---
 
-# 1. Read Before Working
+## Current Stack
 
-Before modifying the project, read:
+- Next.js 16
+- React
+- TypeScript
+- Tailwind CSS
+- Supabase
+- PostgreSQL
+- Supabase CLI
+- ESLint
+- Git/GitHub
+
+Docker is not required for the current development workflow.
+
+---
+
+## Important Files
 
 ```text
-README.md
-AGENTS.md
-CLAUDE.md
-```
+app/
+  report/
+    page.tsx
 
-The database migration history must also be inspected before making database-related changes.
+lib/
+  supabase/
+    client.ts
+
+types/
+  database.ts
+
+supabase/
+  migrations/
+```
 
 ---
 
-# 2. Core Architecture
+## Database Baseline
 
-OpenWitness has:
-
-```text
-Next.js
-React
-TypeScript
-Tailwind CSS
-Supabase
-PostgreSQL
-Supabase Auth
-Vercel
-GitHub
-```
-
-Public users are anonymous.
-
-Staff users authenticate through Supabase Auth.
-
----
-
-# 3. Critical Privacy Rule
-
-OpenWitness does NOT have public user accounts.
-
-Never introduce:
-
-```text
-signup
-public login
-public account
-public profile
-reporter account
-```
-
-without explicit architectural approval.
-
----
-
-# 4. Reporter Identity Rule
-
-Reporter identity must never be stored.
-
-Do NOT add fields such as:
-
-```text
-user_id
-reporter_id
-name
-email
-phone
-address
-ip_address
-device_id
-browser_fingerprint
-gps_coordinates
-tracking_id
-```
-
-Do not introduce tracking merely to solve spam or abuse.
-
----
-
-# 5. Language Rule
-
-The public application is Bengali-first.
-
-User-facing text should be written in Bengali.
-
-Technical identifiers may remain English.
-
-Examples:
-
-```text
-Database:
-incidents
-districts
-categories
-
-UI:
-ঘটনা
-জেলা
-শ্রেণি
-```
-
-Do not randomly introduce English UI labels.
-
----
-
-# 6. Database Rule
-
-The production V1 database is FROZEN.
-
-Frozen migration:
+The original V1 database migration is:
 
 ```text
 supabase/migrations/20260825192716_create_openwitness_v1.sql
 ```
 
-NEVER:
+This migration is **frozen**.
+
+### Never modify the frozen migration.
+
+If the database requires a change:
 
 ```text
-edit it
-rename it
-delete it
-rewrite it
+Existing migration
+        ↓
+DO NOT EDIT
+        ↓
+Create new migration
+        ↓
+Test
+        ↓
+Apply
+        ↓
+Verify
 ```
 
-If a database change is required, create a NEW migration.
-
-Example:
+Use:
 
 ```powershell
-supabase migration new add_feature_name
+supabase migration new descriptive_name
 ```
 
-Then:
+---
+
+## Existing Corrective Migrations
+
+The current database includes:
+
+```text
+20260825200659_fix_public_categories_rls.sql
+20260825202106_fix_incident_date_timezone.sql
+```
+
+These are already applied to the remote database.
+
+Do not recreate or duplicate these fixes.
+
+---
+
+## Supabase Rules
+
+Always treat Supabase RLS as part of the security architecture.
+
+Do not solve a query failure by:
+
+```text
+- disabling RLS
+- granting broad privileges
+- granting anon access to private functions
+- exposing pending records
+- using service-role credentials in the browser
+```
+
+Instead:
+
+1. Inspect the exact PostgreSQL error.
+2. Identify the database role.
+3. Inspect table privileges.
+4. Inspect RLS policies.
+5. Inspect relevant functions.
+6. Inspect relevant triggers.
+7. Make the smallest safe correction.
+8. Use a new migration.
+9. Verify the result.
+
+---
+
+## Anonymous Reporting
+
+Anonymous users are allowed to submit incidents.
+
+The reporter does not need:
+
+- Account
+- Name
+- Email
+- Phone number
+
+The report submission flow currently performs an INSERT only:
+
+```ts
+const { error: insertError } = await supabase
+  .from("incidents")
+  .insert(insertPayload);
+```
+
+Do not change this to:
+
+```ts
+.insert(insertPayload)
+.select(...)
+```
+
+unless the RLS model is deliberately changed and reviewed.
+
+New incidents are pending and anonymous users are intentionally prevented from reading pending incidents.
+
+---
+
+## Incident Security Model
+
+The expected flow is:
+
+```text
+Anonymous reporter
+       │
+       ▼
+Incident INSERT
+       │
+       ▼
+Pending
+       │
+       ▼
+Moderation
+       │
+ ┌─────┴─────┐
+ ▼           ▼
+Approved    Rejected
+ │
+ ▼
+Public
+```
+
+Never expose pending moderation data through public queries.
+
+---
+
+## Incident Date
+
+OpenWitness uses the Bangladesh calendar for incident-date validation.
+
+Timezone:
+
+```text
+Asia/Dhaka
+```
+
+The database is configured with UTC timezone.
+
+Therefore, do not use database UTC `CURRENT_DATE` for Bangladesh-specific incident-date validation.
+
+The current database validation uses:
+
+```sql
+(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Dhaka')::date
+```
+
+An incident date later than the current Bangladesh calendar date must be rejected.
+
+---
+
+## Description Validation
+
+The database constraint requires:
+
+```text
+20 <= trimmed description length <= 10000
+```
+
+The frontend also validates this before submission.
+
+Do not remove the database constraint just because frontend validation is present.
+
+Database validation remains authoritative.
+
+---
+
+## Categories
+
+Public users may read active categories.
+
+Authenticated administrators may read inactive categories.
+
+Anonymous users must not be required to execute:
+
+```text
+private.is_admin()
+```
+
+or other privileged security functions.
+
+The current categories RLS design intentionally separates:
+
+```text
+Public active-category access
+```
+
+from:
+
+```text
+Authenticated administrator access
+```
+
+---
+
+## Database Functions
+
+Security-sensitive functions may use:
+
+```sql
+SECURITY DEFINER
+```
+
+When modifying a security-definer function, preserve an explicit safe search path where appropriate.
+
+The current incident date function uses:
+
+```sql
+SECURITY DEFINER
+SET search_path TO ''
+```
+
+Do not casually remove these security properties.
+
+---
+
+## Generated Database Types
+
+Database types are stored in:
+
+```text
+types/database.ts
+```
+
+Regenerate after schema changes:
+
+```powershell
+supabase gen types typescript --linked > types\database.ts
+```
+
+After generation, verify the file encoding if using PowerShell.
+
+The generated file must be valid UTF-8 and must pass ESLint.
+
+Run:
+
+```powershell
+npx tsc --noEmit
+npm run lint
+```
+
+---
+
+## Supabase Client
+
+The browser client is:
+
+```text
+lib/supabase/client.ts
+```
+
+Use the generated `Database` type when appropriate.
+
+Do not introduce an untyped Supabase client when the existing typed client can be used.
+
+---
+
+## Environment Variables
+
+Never commit secrets.
+
+Client-side environment variables may include only values intentionally safe for browser use, such as:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+```
+
+Never put these in client code:
+
+```text
+SUPABASE_SERVICE_ROLE_KEY
+DATABASE_PASSWORD
+private API keys
+secret tokens
+```
+
+---
+
+## Frontend Validation
+
+Frontend validation should provide a good user experience.
+
+It must not replace database validation.
+
+Current report validation includes:
+
+```text
+Category required
+Division required
+District required
+Incident date required
+Incident date <= Bangladesh current date
+Title required
+Description required
+Description >= 20 characters
+Description <= 10,000 characters
+```
+
+---
+
+## Error Handling
+
+Do not hide Supabase errors during development.
+
+Use explicit logging such as:
+
+```ts
+console.error(
+  "[OpenWitness] Incident submission failed:",
+  JSON.stringify(info, null, 2),
+);
+```
+
+When debugging database errors, preserve:
+
+```text
+code
+message
+details
+hint
+```
+
+Do not replace a useful database error with an unexplained generic error during development.
+
+User-facing production messages may be more concise.
+
+---
+
+## Data Integrity
+
+Do not bypass:
+
+- PostgreSQL constraints
+- PostgreSQL triggers
+- Foreign keys
+- RLS
+- Database validation functions
+
+If application code conflicts with database rules, determine whether the application is wrong before changing the database.
+
+---
+
+## Migration Workflow
+
+For every database change:
+
+### 1. Create migration
+
+```powershell
+supabase migration new descriptive_name
+```
+
+### 2. Write migration
+
+Keep the migration:
+
+- focused
+- reversible where practical
+- explicit
+- security-conscious
+
+### 3. Dry run
 
 ```powershell
 supabase db push --dry-run
 ```
 
-Only after review:
+### 4. Apply
 
 ```powershell
 supabase db push
 ```
 
----
+### 5. Verify
 
-# 7. Database Security
-
-Never disable RLS.
-
-Never bypass database security simply to make a feature easier.
-
-Preserve:
-
-```text
-RLS
-FORCE RLS
-GRANTS
-REVOKES
-foreign keys
-indexes
-security-definer protections
-private schema
-security-invoker views
+```powershell
+supabase migration list
 ```
 
-Do not expose private moderation tables to anonymous users.
+Local and remote migration histories must remain synchronized.
 
 ---
 
-# 8. Authentication
+## Application Verification
 
-Public users:
+After code changes:
 
-```text
-No authentication
+```powershell
+npx tsc --noEmit
 ```
 
-Staff:
-
-```text
-Supabase Auth
-```
-
-Staff authorization comes from:
-
-```text
-public.admin_users
-```
-
-Roles:
-
-```text
-admin
-moderator
-```
-
-Do not implement authorization using frontend state alone.
-
-Authorization must be enforced server-side and by PostgreSQL RLS.
-
----
-
-# 9. Service Role Key
-
-Never put:
-
-```text
-SUPABASE_SERVICE_ROLE_KEY
-```
-
-inside:
-
-```text
-NEXT_PUBLIC_*
-```
-
-Never expose it to browser code.
-
-Never commit it to GitHub.
-
-Use it only in trusted server-side code when absolutely necessary.
-
----
-
-# 10. Public Incident Rules
-
-Public users can submit anonymous incidents.
-
-A new public incident must remain:
-
-```text
-status = pending
-verification_status = reported
-published_at = null
-```
-
-Public users must never be able to create an already-approved incident.
-
----
-
-# 11. Publication Rules
-
-Only approved incidents may be public.
-
-Expected publication state:
-
-```text
-status = approved
-published_at IS NOT NULL
-```
-
-Never expose pending, rejected, or archived incidents through public pages.
-
-Use the public-safe view:
-
-```text
-public.public_incidents
-```
-
-where appropriate.
-
----
-
-# 12. Location Rules
-
-OpenWitness is Bangladesh-only.
-
-The database contains:
-
-```text
-8 divisions
-64 districts
-```
-
-The UI must use cascading selection:
-
-```text
-Division
-   ↓
-District
-```
-
-A district must belong to the selected division.
-
-Never bypass the database relationship.
-
----
-
-# 13. Moderation
-
-Moderators can review and manage incidents.
-
-Admins have elevated permissions including staff and configuration management.
-
-Never give moderators unrestricted admin permissions.
-
-Moderation changes must preserve the audit trail.
-
----
-
-# 14. UI Rules
-
-Build reusable components.
-
-Prefer:
-
-```text
-server components
-server-side authorization
-typed data access
-accessible forms
-semantic HTML
-```
-
-Avoid unnecessary client-side state.
-
-Do not put secrets in client components.
-
----
-
-# 15. Error Handling
-
-Never expose:
-
-```text
-database errors
-SQL errors
-stack traces
-Supabase secrets
-internal implementation details
-```
-
-to public users.
-
-Public errors should be understandable and Bengali-first.
-
-Detailed errors may be logged securely server-side.
-
----
-
-# 16. Validation
-
-Validate input both:
-
-```text
-client-side
-+
-server/database-side
-```
-
-Never rely only on frontend validation.
-
-Always validate:
-
-```text
-title
-description
-category
-division
-district
-incident_date
-```
-
----
-
-# 17. Code Quality
-
-Prefer simple, maintainable code.
-
-Avoid unnecessary dependencies.
-
-Before completing significant work:
+Then:
 
 ```powershell
 npm run lint
-npm run build
 ```
 
-Both should pass.
+Both must pass before committing.
+
+For report-flow changes, also test the actual browser flow.
 
 ---
 
-# 18. Database Changes
+## Report Submission Testing
 
-Before database deployment:
+At minimum test:
+
+### Valid report
+
+```text
+Active category
+Valid division
+Valid district
+Current/past incident date
+20+ character description
+Valid title
+```
+
+Expected:
+
+```text
+Successful submission
+```
+
+### Future date
+
+Expected:
+
+```text
+Incident date cannot be in the future
+```
+
+### Short description
+
+Expected:
+
+```text
+Description must contain at least 20 characters
+```
+
+### Long description
+
+Expected:
+
+```text
+Description cannot exceed 10,000 characters
+```
+
+---
+
+## Code Style
+
+Prefer:
+
+- TypeScript
+- explicit types
+- small functions
+- readable validation
+- existing project conventions
+- generated database types
+- clear error handling
+
+Avoid:
+
+- unnecessary abstractions
+- `any`
+- duplicated database types
+- broad refactors while fixing a focused issue
+- unrelated dependency changes
+
+---
+
+## Security Review Before Changes
+
+Before modifying any database-backed feature, ask:
+
+```text
+Who can execute this?
+Who can read this?
+Who can insert this?
+Who can update this?
+Who can delete this?
+What happens if the user is anonymous?
+What happens if the user is authenticated?
+What happens if the user manipulates the browser?
+What happens if the client bypasses validation?
+```
+
+The answer must be enforced at the database level where appropriate.
+
+---
+
+## Public vs Internal Data
+
+Public users should only see intentionally public data.
+
+Do not expose:
+
+- pending reports
+- rejected reports
+- moderation notes
+- internal audit records
+- administrative information
+- private reporter information
+
+unless the database architecture explicitly defines that information as public.
+
+---
+
+## Git Rules
+
+Before changing files:
 
 ```powershell
-supabase db push --dry-run
+git status
 ```
 
-Review the migration.
+After changes:
 
-Never directly modify production schema through the dashboard when the change should be represented by a migration.
+```powershell
+npx tsc --noEmit
+npm run lint
+git diff
+```
 
----
+Before commit:
 
-# 19. Git
+```powershell
+git status
+```
 
-Use meaningful commits.
+Use focused commits.
 
 Examples:
 
 ```text
-feat: add anonymous report form
-fix: validate district selection
-feat: add moderator dashboard
-fix: protect admin route
-docs: update README
+feat: add moderation dashboard
+fix: correct incident date validation
+fix: secure categories RLS
+refactor: simplify report form
+docs: update project documentation
 ```
 
 Do not commit:
@@ -429,65 +616,125 @@ Do not commit:
 ```text
 .env
 .env.local
+secrets
 credentials
-tokens
 service-role keys
+database passwords
 ```
 
 ---
 
-# 20. AI Agent Safety
+## Current Verified Commit
 
-Before implementing a feature, check whether it affects:
+The current report submission and security corrections are committed as:
 
 ```text
-privacy
-authentication
-authorization
-RLS
-database schema
-public exposure
-reporter anonymity
+5ddb597
 ```
 
-If it does, preserve the existing security architecture.
+Commit:
 
-Do not make architectural changes silently.
+```text
+fix: secure report submission and incident validation
+```
+
+The main branch is expected to remain clean after completed work.
 
 ---
 
-# 21. Frozen Database Principle
+## Do Not Guess
 
-The V1 database is the production baseline.
-
-Treat it as immutable.
-
-Future evolution must be:
+If an error originates from PostgreSQL or Supabase:
 
 ```text
-V1
- ↓
-new migration
- ↓
-V1.x / V2
+Do not guess.
 ```
 
-Never rewrite history.
+Inspect:
+
+```text
+error.code
+error.message
+error.details
+error.hint
+```
+
+Then inspect the actual database object involved.
+
+Examples:
+
+```sql
+pg_get_functiondef(...)
+```
+
+```sql
+pg_get_constraintdef(...)
+```
+
+```text
+information_schema.triggers
+```
+
+```text
+pg_policies
+```
+
+Use evidence from the actual database before changing security-sensitive code.
 
 ---
 
-# 22. Final Rule
+## Scope Discipline
 
-When uncertain, prefer:
+When fixing a bug:
+
+1. Reproduce it.
+2. Identify the root cause.
+3. Fix only the required layer.
+4. Preserve existing security controls.
+5. Run tests.
+6. Verify the real user flow.
+7. Commit the smallest coherent change.
+
+Do not perform unrelated refactors during a security or data-integrity fix.
+
+---
+
+## Priority Order
+
+When making engineering decisions, prioritize:
 
 ```text
-privacy
-security
-database integrity
-least privilege
-maintainability
+1. Security
+2. Data integrity
+3. Privacy
+4. Correctness
+5. Maintainability
+6. User experience
+7. Performance
 ```
 
-over convenience.
+Do not sacrifice a higher-priority property merely to simplify implementation.
 
-OpenWitness must remain anonymous, Bengali-first, secure, and migration-controlled.
+---
+
+## Future Development
+
+The next major area after anonymous reporting is the moderation workflow.
+
+Expected future architecture:
+
+```text
+Anonymous reporting
+        ↓
+Pending incidents
+        ↓
+Authenticated staff/admin
+        ↓
+Review
+        ↓
+Approve / Reject
+        ↓
+Public approved incidents
+```
+
+Any moderation implementation must preserve the existing anonymous-reporting security model.

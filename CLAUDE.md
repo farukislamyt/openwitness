@@ -1,400 +1,468 @@
 # OpenWitness — Claude Instructions
 
-Read `README.md` and `AGENTS.md` before making changes.
+## Project
 
-## Project Identity
+OpenWitness is an anonymous public-interest incident reporting platform.
 
-OpenWitness is a Bengali-first anonymous public-interest reporting platform for Bangladesh.
+Core priorities:
 
-Repository:
-
-https://github.com/farukislamyt/openwitness
-
-Maintainer:
-
-Faruk Islam
+1. Security
+2. Data integrity
+3. Privacy
+4. Correctness
+5. Maintainability
+6. User experience
 
 ---
 
-## Technology
+## Stack
 
-- Next.js
+- Next.js 16
 - React
 - TypeScript
 - Tailwind CSS
 - Supabase
 - PostgreSQL
-- Supabase Auth
-- Vercel
-- GitHub
+- Supabase CLI
+- ESLint
+- Git/GitHub
+
+Docker is not required.
 
 ---
 
-## Non-Negotiable Architecture
+## Critical Database Rule
 
-### Public users
-
-Public users are anonymous.
-
-There is NO:
-
-- signup
-- public login
-- public account
-- public profile
-- reporter identity
-
-### Staff
-
-Only staff authenticate.
-
-Authentication:
-
-```text
-Supabase Auth
-```
-
-Authorization:
-
-```text
-admin_users
-+
-PostgreSQL RLS
-```
-
-Roles:
-
-```text
-admin
-moderator
-```
-
----
-
-## Privacy
-
-Reporter identity must never be stored.
-
-Do not add:
-
-```text
-user_id
-reporter_id
-name
-email
-phone
-address
-ip_address
-device_id
-browser_fingerprint
-gps_coordinates
-tracking_id
-```
-
-Do not introduce tracking without explicit architectural approval.
-
----
-
-## Language
-
-The application is Bengali-first.
-
-All public-facing UI should be Bengali.
-
-Technical identifiers can remain English.
-
----
-
-## Database
-
-The production V1 migration is frozen:
+The V1 database migration is frozen:
 
 ```text
 supabase/migrations/20260825192716_create_openwitness_v1.sql
 ```
 
-NEVER modify, rename, or delete this migration.
+**Never modify an already-applied migration.**
 
-Any database change requires a new migration.
-
-Create one with:
+For every database change:
 
 ```powershell
-supabase migration new <migration_name>
+supabase migration new descriptive_name
+supabase db push --dry-run
+supabase db push
+supabase migration list
 ```
 
-Test with:
+Always use a new migration for changes.
+
+---
+
+## Current Migrations
+
+```text
+20260825192716_create_openwitness_v1.sql
+20260825200659_fix_public_categories_rls.sql
+20260825202106_fix_incident_date_timezone.sql
+```
+
+All three are currently applied to the remote database.
+
+---
+
+## Anonymous Reporting
+
+The report page is:
+
+```text
+app/report/page.tsx
+```
+
+Anonymous users can submit incidents without:
+
+- account
+- name
+- email
+- phone
+
+The current submission intentionally uses INSERT only:
+
+```ts
+const { error: insertError } = await supabase
+  .from("incidents")
+  .insert(insertPayload);
+```
+
+Do not add `.select()` to the anonymous submission unless the RLS architecture is deliberately changed and reviewed.
+
+Pending incidents must remain inaccessible to anonymous users.
+
+---
+
+## Incident Date
+
+OpenWitness uses the Bangladesh calendar:
+
+```text
+Asia/Dhaka
+```
+
+The database itself uses UTC.
+
+Never use UTC `CURRENT_DATE` for Bangladesh-specific incident-date validation.
+
+The current database validation uses:
+
+```sql
+(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Dhaka')::date
+```
+
+Future incident dates must be rejected.
+
+---
+
+## Description
+
+The database requires:
+
+```text
+20–10,000 characters
+```
+
+after trimming whitespace.
+
+The frontend also validates:
+
+```text
+minimum = 20
+maximum = 10000
+```
+
+Never remove the database constraint merely because frontend validation exists.
+
+---
+
+## RLS
+
+Treat RLS as a core security boundary.
+
+Never fix a query problem by:
+
+- disabling RLS
+- granting excessive privileges
+- exposing private functions to `anon`
+- allowing anonymous users to read pending incidents
+- putting a service-role key in browser code
+
+When an RLS/database error occurs, inspect the actual:
+
+```text
+code
+message
+details
+hint
+policy
+privileges
+function
+trigger
+constraint
+```
+
+Do not guess.
+
+---
+
+## Categories
+
+Public users may read active categories.
+
+Authenticated administrators may read inactive categories.
+
+Anonymous users must not need to execute:
+
+```text
+private.is_admin()
+```
+
+The corrective categories migration already separates public and administrator access.
+
+Do not duplicate or replace that migration without a demonstrated reason.
+
+---
+
+## Supabase Client
+
+Browser client:
+
+```text
+lib/supabase/client.ts
+```
+
+Generated database types:
+
+```text
+types/database.ts
+```
+
+Regenerate types after database schema changes:
+
+```powershell
+supabase gen types typescript --linked > types\database.ts
+```
+
+Then run:
+
+```powershell
+npx tsc --noEmit
+npm run lint
+```
+
+---
+
+## Security Functions
+
+Security-sensitive PostgreSQL functions may use:
+
+```sql
+SECURITY DEFINER
+```
+
+Preserve an explicit safe search path where currently used.
+
+For example:
+
+```sql
+SECURITY DEFINER
+SET search_path TO ''
+```
+
+Do not weaken security-definer functions to solve application errors.
+
+---
+
+## Frontend Rules
+
+Use the generated Supabase `Database` type.
+
+Prefer explicit types over `any`.
+
+Validate user input before submission.
+
+Keep database validation authoritative.
+
+Avoid unrelated refactoring when fixing a focused bug.
+
+---
+
+## Error Debugging
+
+For Supabase errors, inspect:
+
+```ts
+error.code
+error.message
+error.details
+error.hint
+```
+
+A useful development log is:
+
+```ts
+console.error(
+  "[OpenWitness] Database operation failed:",
+  JSON.stringify(
+    {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    },
+    null,
+    2,
+  ),
+);
+```
+
+Do not hide the real database error while debugging.
+
+---
+
+## Verification
+
+After code changes:
+
+```powershell
+npx tsc --noEmit
+npm run lint
+```
+
+After database changes:
 
 ```powershell
 supabase db push --dry-run
-```
-
-Only then deploy:
-
-```powershell
 supabase db push
+supabase migration list
 ```
+
+For report-flow changes, test the actual browser submission.
 
 ---
 
-## Database Baseline
+## Report Testing
 
-Current production baseline:
+Test all of the following:
 
-```text
-8 divisions
-64 districts
-16 categories
-```
-
-Verification:
+### Valid
 
 ```text
-OPENWITNESS V1 DATABASE BASELINE: PASS
+Active category
+Valid division
+Valid district
+Current/past Bangladesh date
+20–10,000 character description
+Valid title
 ```
+
+### Invalid future date
+
+Must be rejected.
+
+### Description under 20 characters
+
+Must be rejected.
+
+### Description over 10,000 characters
+
+Must be rejected.
+
+### Anonymous access
+
+Must work without login.
+
+### Pending privacy
+
+Anonymous users must not be able to read pending incidents.
 
 ---
 
-## Security
+## Environment Variables
 
-Preserve:
+Never commit secrets.
 
-```text
-RLS
-FORCE RLS
-GRANTS
-REVOKES
-foreign keys
-indexes
-security-definer protections
-private schema
-security-invoker public view
+Allowed client configuration may include:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
-
-Never disable RLS to solve an application problem.
-
-Never expose:
-
-```text
-admin_users
-moderation_actions
-database_metadata
-pending incidents
-rejected incidents
-archived incidents
-```
-
-to anonymous users.
-
----
-
-## Service Role
 
 Never expose:
 
 ```text
 SUPABASE_SERVICE_ROLE_KEY
+database passwords
+private API keys
+secret tokens
 ```
-
-to the browser.
-
-Never use it in:
-
-```text
-NEXT_PUBLIC_*
-```
-
-Never commit it to GitHub.
-
----
-
-## Incident Rules
-
-Anonymous public submissions begin as:
-
-```text
-pending
-```
-
-with:
-
-```text
-verification_status = reported
-published_at = null
-```
-
-Only approved incidents can be publicly displayed.
-
-Public data should use:
-
-```text
-public.public_incidents
-```
-
-where appropriate.
-
----
-
-## Location
-
-OpenWitness supports Bangladesh's:
-
-```text
-8 divisions
-64 districts
-```
-
-The UI must implement:
-
-```text
-Division
-   ↓
-District
-```
-
-Only districts belonging to the selected division may be selected.
-
----
-
-## Moderation
-
-Moderators can review incidents.
-
-Admins have elevated permissions.
-
-Do not give moderator-level users unrestricted admin capabilities.
-
-Preserve moderation audit history.
-
----
-
-## Implementation Style
-
-Prefer:
-
-- Server-side authorization
-- Server components where appropriate
-- Typed Supabase access
-- Reusable components
-- Simple architecture
-- Accessible forms
-- Semantic HTML
-- Strong input validation
-
-Avoid unnecessary dependencies and unnecessary client-side state.
-
----
-
-## Validation
-
-Never rely only on client-side validation.
-
-Validate important fields server-side/database-side as well.
-
-Relevant incident fields:
-
-```text
-title
-description
-category
-division
-district
-incident_date
-```
-
----
-
-## Error Handling
-
-Do not expose raw:
-
-```text
-SQL errors
-database errors
-stack traces
-Supabase credentials
-internal implementation details
-```
-
-to public users.
-
-Public error messages should be Bengali-first and user-friendly.
-
----
-
-## Testing
-
-Before considering a feature complete:
-
-```powershell
-npm run lint
-npm run build
-```
-
-must pass.
-
-For database changes:
-
-```powershell
-supabase db push --dry-run
-```
-
-must be reviewed.
 
 ---
 
 ## Git
 
-Use clear commit messages.
+Use focused conventional commits.
 
 Examples:
 
 ```text
-feat: add anonymous incident submission
-fix: validate district selection
-feat: add moderator dashboard
-fix: protect admin route
-docs: update documentation
+feat: add moderation dashboard
+fix: correct incident validation
+fix: secure categories RLS
+refactor: simplify report form
+docs: update agent instructions
 ```
 
-Never commit:
+Before committing:
+
+```powershell
+git status
+git diff
+npx tsc --noEmit
+npm run lint
+```
+
+After pushing:
+
+```powershell
+git status
+```
+
+The expected final state is:
 
 ```text
-.env
-.env.local
-credentials
-tokens
-service-role keys
+nothing to commit, working tree clean
 ```
 
 ---
 
-## Important
+## Current Verified State
 
-Do not silently change the architecture.
+The anonymous reporting flow is working.
 
-If a requested feature conflicts with:
+Verified:
 
-- reporter anonymity
-- RLS
-- staff authorization
-- frozen V1 database
-- Bengali-first UI
+```text
+✓ Supabase linked
+✓ V1 database applied
+✓ Corrective migrations applied
+✓ Migration history synchronized
+✓ Categories loading
+✓ Divisions loading
+✓ Districts loading
+✓ Anonymous incident submission
+✓ Bangladesh timezone-aware date validation
+✓ Description length validation
+✓ RLS protection
+✓ TypeScript
+✓ ESLint
+✓ Git push
+```
 
-preserve the existing architecture and explain the conflict before proceeding.
+Current report/security commit:
+
+```text
+5ddb597
+```
+
+Commit:
+
+```text
+fix: secure report submission and incident validation
+```
 
 ---
 
-## Priority
+## Future Work
 
-When making implementation decisions, prioritize:
+The next major feature is moderation.
 
-1. Privacy
-2. Security
-3. Database integrity
-4. Correct authorization
-5. Maintainability
-6. Performance
-7. Convenience
+Expected flow:
 
-OpenWitness must remain anonymous, Bengali-first, secure, and migration-controlled.
+```text
+Anonymous report
+       ↓
+Pending
+       ↓
+Authenticated staff/admin
+       ↓
+Review
+       ↓
+Approve / Reject
+       ↓
+Approved → Public
+Rejected → Internal
+```
+
+Any future moderation implementation must preserve:
+
+- anonymous reporter privacy
+- pending-incident privacy
+- RLS
+- database validation
+- auditability
+- least-privilege access
