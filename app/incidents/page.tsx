@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Suspense } from "react";
+import SearchForm from "./SearchForm";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 type IncidentRow = {
     id: string | null;
@@ -75,11 +79,13 @@ export default async function IncidentsPage({
         category?: string;
         division?: string;
         page?: string;
+        q?: string;
     }>;
 }) {
     const params = await searchParams;
     const categorySlug = params.category ?? "";
     const divisionSlug = params.division ?? "";
+    const searchQuery = params.q ?? "";
     const currentPage = Math.max(1, Number(params.page) || 1);
     const pageSize = 20;
     const offset = (currentPage - 1) * pageSize;
@@ -118,6 +124,10 @@ export default async function IncidentsPage({
 
     if (divisionSlug) {
         query = query.eq("division_slug", divisionSlug);
+    }
+
+    if (searchQuery) {
+        query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
     }
 
     const { data: incidentsRaw, count, error: queryError } = await query
@@ -169,6 +179,9 @@ export default async function IncidentsPage({
         if (overrides.division || divisionSlug) {
             sp.set("division", overrides.division || divisionSlug);
         }
+        if (searchQuery) {
+            sp.set("q", searchQuery);
+        }
         if (overrides.page && overrides.page !== "1") {
             sp.set("page", overrides.page);
         }
@@ -178,39 +191,7 @@ export default async function IncidentsPage({
 
     return (
         <main className="min-h-screen bg-white text-zinc-950">
-            <header className="border-b border-zinc-200">
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-                    <Link
-                        href="/"
-                        className="text-2xl font-bold tracking-tight"
-                    >
-                        OpenWitness
-                    </Link>
-
-                    <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
-                        <Link
-                            href="/incidents"
-                            className="text-zinc-950 transition-colors hover:text-zinc-500"
-                        >
-                            প্রকাশিত ঘটনা
-                        </Link>
-
-                        <Link
-                            href="/report"
-                            className="rounded-full bg-zinc-950 px-5 py-2.5 text-white transition-colors hover:bg-zinc-800"
-                        >
-                            ঘটনা রিপোর্ট করুন
-                        </Link>
-                    </nav>
-
-                    <Link
-                        href="/report"
-                        className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-medium text-white md:hidden"
-                    >
-                        রিপোর্ট করুন
-                    </Link>
-                </div>
-            </header>
+            <SiteHeader />
 
             <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8 lg:py-16">
                 <div className="max-w-2xl">
@@ -285,6 +266,12 @@ export default async function IncidentsPage({
                         ))}
                     </div>
                 ) : null}
+
+                <div className="mt-6">
+                    <Suspense>
+                        <SearchForm />
+                    </Suspense>
+                </div>
             </section>
 
             <section className="border-t border-zinc-200">
@@ -309,7 +296,7 @@ export default async function IncidentsPage({
                             </h2>
 
                             <p className="mt-2 text-sm text-zinc-500">
-                                {categorySlug || divisionSlug
+                                {categorySlug || divisionSlug || searchQuery
                                     ? "ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।"
                                     : "এখনো কোনো ঘটনা প্রকাশিত হয়নি।"}
                             </p>
@@ -318,7 +305,7 @@ export default async function IncidentsPage({
                         <>
                             <p className="mb-6 text-sm text-zinc-500">
                                 মোট {totalCount} টি ঘটনা
-                                {categorySlug || divisionSlug
+                                {categorySlug || divisionSlug || searchQuery
                                     ? " (ফিল্টার্ড)"
                                     : ""}
                             </p>
@@ -438,15 +425,7 @@ export default async function IncidentsPage({
                 </div>
             </section>
 
-            <footer className="border-t border-zinc-200">
-                <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-                    <p>© {new Date().getFullYear()} OpenWitness</p>
-
-                    <p>
-                        বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform
-                    </p>
-                </div>
-            </footer>
+            <SiteFooter />
         </main>
     );
 }

@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import FlagForm from "./FlagForm";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 type IncidentDetail = {
     id: string;
@@ -139,39 +141,7 @@ export default async function IncidentDetailPage({
 
     return (
         <main className="min-h-screen bg-white text-zinc-950">
-            <header className="border-b border-zinc-200">
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-                    <Link
-                        href="/"
-                        className="text-2xl font-bold tracking-tight"
-                    >
-                        OpenWitness
-                    </Link>
-
-                    <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
-                        <Link
-                            href="/incidents"
-                            className="transition-colors hover:text-zinc-500"
-                        >
-                            প্রকাশিত ঘটনা
-                        </Link>
-
-                        <Link
-                            href="/report"
-                            className="rounded-full bg-zinc-950 px-5 py-2.5 text-white transition-colors hover:bg-zinc-800"
-                        >
-                            ঘটনা রিপোর্ট করুন
-                        </Link>
-                    </nav>
-
-                    <Link
-                        href="/report"
-                        className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-medium text-white md:hidden"
-                    >
-                        রিপোর্ট করুন
-                    </Link>
-                </div>
-            </header>
+            <SiteHeader />
 
             <section className="mx-auto max-w-4xl px-6 py-12 lg:py-20">
                 <div className="mb-6">
@@ -252,15 +222,7 @@ export default async function IncidentDetailPage({
                 </div>
             </section>
 
-            <footer className="border-t border-zinc-200">
-                <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-                    <p>© {new Date().getFullYear()} OpenWitness</p>
-
-                    <p>
-                        বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform
-                    </p>
-                </div>
-            </footer>
+            <SiteFooter />
         </main>
     );
 }
