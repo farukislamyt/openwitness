@@ -12,6 +12,7 @@ type ModerationResult = {
 export async function moderateIncident(
     incidentId: string,
     action: "approved" | "rejected",
+    notes?: string,
 ): Promise<ModerationResult> {
     if (
         action !== "approved" &&
@@ -133,6 +134,40 @@ export async function moderateIncident(
         incident.public_id,
         action,
     );
+
+    if (notes && notes.trim()) {
+        const { data: latestAction } = await supabase
+            .from("moderation_actions")
+            .select("id")
+            .eq("incident_id", incidentId)
+            .eq("admin_user_id", staffUser.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (latestAction) {
+            const { error: notesError } = await supabase
+                .from("moderation_actions")
+                .update({ notes: notes.trim() })
+                .eq("id", latestAction.id);
+
+            if (notesError) {
+                console.error(
+                    "[OpenWitness] Moderation notes update failed:",
+                    JSON.stringify(
+                        {
+                            code: notesError.code,
+                            message: notesError.message,
+                            details: notesError.details,
+                            hint: notesError.hint,
+                        },
+                        null,
+                        2,
+                    ),
+                );
+            }
+        }
+    }
 
     revalidatePath("/admin");
     revalidatePath(`/admin/incidents/${incidentId}`);
