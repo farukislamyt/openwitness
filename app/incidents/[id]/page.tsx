@@ -60,12 +60,33 @@ export async function generateMetadata({
 
     const { data: incident } = await supabase
         .from("public_incidents")
-        .select("title")
+        .select("title, description, category, division, district, incident_date")
         .eq("id", id)
         .maybeSingle();
 
+    if (!incident) {
+        return {
+            title: "ঘটনা পাওয়া যায়নি",
+            description: "এই ঘটনাটি পাওয়া যায়নি বা প্রকাশিত হয়নি।",
+        };
+    }
+
+    const desc = incident.description
+        ? incident.description.slice(0, 160).trim()
+        : `${incident.title} — OpenWitness`;
+
     return {
-        title: incident?.title ?? "ঘটনা পাওয়া যায়নি",
+        title: incident.title,
+        description: desc,
+        openGraph: {
+            title: `${incident.title} | OpenWitness`,
+            description: desc,
+            url: `https://openwitness.vercel.app/incidents/${id}`,
+            type: "article",
+        },
+        alternates: {
+            canonical: `/incidents/${id}`,
+        },
     };
 }
 

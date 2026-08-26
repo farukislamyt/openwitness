@@ -62,7 +62,16 @@ function verificationStyles(status: string | null): string {
 export const metadata = {
     title: "প্রকাশিত ঘটনা",
     description:
-        "OpenWitness-এ প্রকাশিত জনস্বার্থ সংশ্লিষ্ট ঘটনাসমূহ দেখুন।",
+        "OpenWitness-এ প্রকাশিত জনস্বার্থ সংশ্লিষ্ট ঘটনাসমূহ দেখুন। বাংলাদেশের সকল জেলা ও বিভাগ থেকে রিপোর্ট।",
+    openGraph: {
+        title: "প্রকাশিত ঘটনা | OpenWitness",
+        description:
+            "OpenWitness-এ প্রকাশিত জনস্বার্থ সংশ্লিষ্ট ঘটনাসমূহ দেখুন।",
+        url: "https://openwitness.vercel.app/incidents",
+    },
+    alternates: {
+        canonical: "/incidents",
+    },
 };
 
 export default async function IncidentsPage({

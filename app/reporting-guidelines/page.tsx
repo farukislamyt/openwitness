@@ -3,7 +3,16 @@ import PolicyLayout from "@/components/PolicyLayout";
 export const metadata = {
     title: "Reporting Guidelines",
     description:
-        "OpenWitness Reporting Guidelines — কীভাবে একটি রিপোর্ট জমা দিতে হয়।",
+        "OpenWitness Reporting Guidelines — কীভাবে একটি রিপোর্ট জমা দিতে হয়। ভালো রিপোর্ট লেখার পূর্ণাঙ্গ নির্দেশিকা।",
+    openGraph: {
+        title: "Reporting Guidelines | OpenWitness",
+        description:
+            "OpenWitness Reporting Guidelines — কীভাবে একটি রিপোর্ট জমা দিতে হয়।",
+        url: "https://openwitness.vercel.app/reporting-guidelines",
+    },
+    alternates: {
+        canonical: "/reporting-guidelines",
+    },
 };
 
 export default function ReportingGuidelinesPage() {

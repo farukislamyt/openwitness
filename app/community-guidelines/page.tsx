@@ -3,7 +3,16 @@ import PolicyLayout from "@/components/PolicyLayout";
 export const metadata = {
     title: "Community Guidelines",
     description:
-        "OpenWitness Community Guidelines — আমাদের কমিউনিটির নীতিমালা।",
+        "OpenWitness Community Guidelines — আমাদের কমিউনিটির নীতিমালা। সকলের জন্য নিরাপদ পরিবেশ।",
+    openGraph: {
+        title: "Community Guidelines | OpenWitness",
+        description:
+            "OpenWitness Community Guidelines — আমাদের কমিউনিটির নীতিমালা।",
+        url: "https://openwitness.vercel.app/community-guidelines",
+    },
+    alternates: {
+        canonical: "/community-guidelines",
+    },
 };
 
 export default function CommunityGuidelinesPage() {

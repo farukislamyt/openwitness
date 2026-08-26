@@ -2,6 +2,14 @@ import Link from "next/link";
 import { Suspense } from "react";
 import LoginForm from "./LoginForm";
 
+export const metadata = {
+    title: "লগইন",
+    robots: {
+        index: false,
+        follow: false,
+    },
+};
+
 export default function LoginPage() {
     return (
         <main className="min-h-screen bg-white text-zinc-950">

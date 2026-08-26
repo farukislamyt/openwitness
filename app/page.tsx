@@ -180,15 +180,30 @@ export default async function Home() {
                     "@context": "https://schema.org",
                     "@type": "WebSite",
                     name: "OpenWitness",
-                    url: "https://openwitness.org",
+                    url: "https://openwitness.vercel.app",
                     description:
                         "বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform।",
                     inLanguage: "bn",
                     potentialAction: {
                         "@type": "SearchAction",
-                        target: "https://openwitness.org/incidents?q={search_term_string}",
+                        target: "https://openwitness.vercel.app/incidents?q={search_term_string}",
                         "query-input": "required name=search_term_string",
                     },
+                }}
+            />
+            <JsonLd
+                data={{
+                    "@context": "https://schema.org",
+                    "@type": "Organization",
+                    name: "OpenWitness",
+                    url: "https://openwitness.vercel.app",
+                    description:
+                        "বাংলাদেশের জনস্বার্থে একটি anonymous public-interest incident reporting platform।",
+                    foundingDate: "2026",
+                    applicationCategory: "Communications",
+                    operatingSystem: "Web",
+                    inLanguage: "bn",
+                    sameAs: [],
                 }}
             />
 

@@ -3,7 +3,16 @@ import PolicyLayout from "@/components/PolicyLayout";
 export const metadata = {
     title: "Privacy Policy",
     description:
-        "OpenWitness Privacy Policy — কোন তথ্য সংগ্রহ করা হয়, কোনটি নয়।",
+        "OpenWitness Privacy Policy — কোন তথ্য সংগ্রহ করা হয়, কোনটি নয়। আপনার গোপনীয়তা আমাদের অগ্রাধিকার।",
+    openGraph: {
+        title: "Privacy Policy | OpenWitness",
+        description:
+            "OpenWitness Privacy Policy — কোন তথ্য সংগ্রহ করা হয়, কোনটি নয়।",
+        url: "https://openwitness.vercel.app/privacy",
+    },
+    alternates: {
+        canonical: "/privacy",
+    },
 };
 
 export default function PrivacyPage() {

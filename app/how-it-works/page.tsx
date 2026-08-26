@@ -5,7 +5,16 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
     title: "কীভাবে কাজ করে",
     description:
-        "OpenWitness কীভাবে কাজ করে — রিপোর্ট থেকে প্রকাশ পর্যন্ত।",
+        "OpenWitness কীভাবে কাজ করে — রিপোর্ট থেকে প্রকাশ পর্যন্ত। তিনটি সহজ ধাপে জনস্বার্থের ঘটনা নথিভুক্ত করুন।",
+    openGraph: {
+        title: "কীভাবে কাজ করে | OpenWitness",
+        description:
+            "OpenWitness কীভাবে কাজ করে — রিপোর্ট থেকে প্রকাশ পর্যন্ত।",
+        url: "https://openwitness.vercel.app/how-it-works",
+    },
+    alternates: {
+        canonical: "/how-it-works",
+    },
 };
 
 export default function HowItWorksPage() {

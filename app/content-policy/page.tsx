@@ -3,7 +3,16 @@ import PolicyLayout from "@/components/PolicyLayout";
 export const metadata = {
     title: "Content & Publication Policy",
     description:
-        "OpenWitness Content & Publication Policy — কী প্রকাশিত হয়, কী নয়।",
+        "OpenWitness Content & Publication Policy — কী প্রকাশিত হয়, কী নয়। মডারেশন ও প্রকাশনা নীতিমালা।",
+    openGraph: {
+        title: "Content & Publication Policy | OpenWitness",
+        description:
+            "OpenWitness Content & Publication Policy — কী প্রকাশিত হয়, কী নয়।",
+        url: "https://openwitness.vercel.app/content-policy",
+    },
+    alternates: {
+        canonical: "/content-policy",
+    },
 };
 
 export default function ContentPolicyPage() {

@@ -1,7 +1,20 @@
 User-agent: *
 Allow: /
-Disallow: /admin
+Disallow: /admin/
+Disallow: /login
+Disallow: /api/
+Disallow: /_next/
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
 Disallow: /login
 Disallow: /api/
 
-Sitemap: https://openwitness.org/sitemap.xml
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /api/
+
+Sitemap: https://openwitness.vercel.app/sitemap.xml

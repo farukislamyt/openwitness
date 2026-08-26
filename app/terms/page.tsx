@@ -3,7 +3,16 @@ import PolicyLayout from "@/components/PolicyLayout";
 export const metadata = {
     title: "Terms of Use",
     description:
-        "OpenWitness Terms of Use — ব্যবহারের শর্তাবলী।",
+        "OpenWitness Terms of Use — ব্যবহারের শর্তাবলী। প্ল্যাটফর্ম ব্যবহারের নিয়মাবলী জানুন।",
+    openGraph: {
+        title: "Terms of Use | OpenWitness",
+        description:
+            "OpenWitness Terms of Use — ব্যবহারের শর্তাবলী।",
+        url: "https://openwitness.vercel.app/terms",
+    },
+    alternates: {
+        canonical: "/terms",
+    },
 };
 
 export default function TermsPage() {

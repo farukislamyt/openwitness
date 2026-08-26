@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://openwitness.org"),
+  metadataBase: new URL("https://openwitness.vercel.app"),
   alternates: {
     canonical: "/",
   },
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "bn_BD",
-    url: "https://openwitness.org",
+    url: "https://openwitness.vercel.app",
     siteName: "OpenWitness",
     title: "OpenWitness — জনস্বার্থের ঘটনা নথিভুক্ত করুন",
     description:

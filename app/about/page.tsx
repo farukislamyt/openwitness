@@ -5,7 +5,16 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata = {
     title: "আমাদের সম্পর্কে",
     description:
-        "OpenWitness সম্পর্কে জানুন — বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform।",
+        "OpenWitness সম্পর্কে জানুন — বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform। পরিচয় প্রকাশ না করেই ঘটনা রিপোর্ট করুন।",
+    openGraph: {
+        title: "আমাদের সম্পর্কে | OpenWitness",
+        description:
+            "OpenWitness সম্পর্কে জানুন — বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform।",
+        url: "https://openwitness.vercel.app/about",
+    },
+    alternates: {
+        canonical: "/about",
+    },
 };
 
 export default function AboutPage() {

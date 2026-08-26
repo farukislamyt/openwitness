@@ -5,6 +5,15 @@ export const metadata = {
     title: "যোগাযোগ",
     description:
         "OpenWitness-এর সাথে যোগাযোগ করুন — আইনি ও প্রশাসনিক জিজ্ঞাসা।",
+    openGraph: {
+        title: "যোগাযোগ | OpenWitness",
+        description:
+            "OpenWitness-এর সাথে যোগাযোগ করুন — আইনি ও প্রশাসনিক জিজ্ঞাসা।",
+        url: "https://openwitness.vercel.app/contact",
+    },
+    alternates: {
+        canonical: "/contact",
+    },
 };
 
 export default function ContactPage() {
@@ -51,7 +60,7 @@ export default function ContactPage() {
                                     </p>
 
                                     <p className="mt-1 font-semibold">
-                                        contact@openwitness.org
+                                        contact@openwitness.vercel.app
                                     </p>
                                 </div>
                             </div>
@@ -75,7 +84,7 @@ export default function ContactPage() {
                                     </p>
 
                                     <p className="mt-1 font-semibold">
-                                        legal@openwitness.org
+                                        legal@openwitness.vercel.app
                                     </p>
                                 </div>
                             </div>
@@ -151,7 +160,7 @@ export default function ContactPage() {
                                 জিজ্ঞাসার
                                 জন্য
                                 শুধুমাত্র
-                                legal@openwitness.org
+                                legal@openwitness.vercel.app
                                 ব্যবহার
                                 করুন।
                             </p>
@@ -160,7 +169,7 @@ export default function ContactPage() {
                                 সাধারণ
                                 প্রশ্নের
                                 জন্য
-                                contact@openwitness.org
+                                contact@openwitness.vercel.app
                                 ব্যবহার
                                 করুন।
                             </p>
