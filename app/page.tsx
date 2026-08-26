@@ -4,22 +4,8 @@ import { Suspense } from "react";
 import HomeSearchForm from "./HomeSearchForm";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
-
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-}
-
-function toBengaliNumber(n: number): string {
-    const bengaliDigits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
-    return String(n)
-        .split("")
-        .map((d) => bengaliDigits[Number(d)] ?? d)
-        .join("");
-}
+import JsonLd from "@/components/JsonLd";
+import { formatDate, toBengaliNumber } from "@/lib/format";
 
 function verificationLabel(status: string | null): string {
     switch (status) {
@@ -189,6 +175,23 @@ export default async function Home() {
 
     return (
         <main className="min-h-screen bg-white text-zinc-950">
+            <JsonLd
+                data={{
+                    "@context": "https://schema.org",
+                    "@type": "WebSite",
+                    name: "OpenWitness",
+                    url: "https://openwitness.org",
+                    description:
+                        "বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform।",
+                    inLanguage: "bn",
+                    potentialAction: {
+                        "@type": "SearchAction",
+                        target: "https://openwitness.org/incidents?q={search_term_string}",
+                        "query-input": "required name=search_term_string",
+                    },
+                }}
+            />
+
             <SiteHeader />
 
             {/* Hero */}

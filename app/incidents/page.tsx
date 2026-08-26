@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import SearchForm from "./SearchForm";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { formatDate } from "@/lib/format";
 
 type IncidentRow = {
     id: string | null;
@@ -30,14 +31,6 @@ type DivisionRow = {
     name: string;
     slug: string;
 };
-
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-}
 
 function verificationLabel(status: string | null): string {
     switch (status) {

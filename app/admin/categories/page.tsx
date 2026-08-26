@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import CategoryForm from "./CategoryForm";
+import { formatShortDate } from "@/lib/format";
 
 type CategoryRow = {
     id: string;
@@ -10,14 +11,6 @@ type CategoryRow = {
     sort_order: number;
     created_at: string;
 };
-
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
-}
 
 export const metadata = {
     title: "শ্রেণি ব্যবস্থাপনা",
@@ -132,7 +125,7 @@ export default async function AdminCategoriesPage() {
                                     ) : null}
 
                                     <p className="mt-1 text-xs text-zinc-400">
-                                        তৈরি: {formatDate(category.created_at)}
+                                        তৈরি: {formatShortDate(category.created_at)}
                                     </p>
                                 </div>
 

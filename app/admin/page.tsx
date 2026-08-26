@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Suspense } from "react";
-import AdminSearchForm from "./AdminSearchForm";
+import { statusLabel, statusStyles, STATUS_OPTIONS } from "@/lib/admin-utils";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 type IncidentRow = {
     id: string;
@@ -15,72 +15,8 @@ type IncidentRow = {
     district: string | null;
 };
 
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-}
-
-function formatDateTime(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
-function statusLabel(status: string): string {
-    const labels: Record<string, string> = {
-        pending: "নতুন",
-        under_review: "পর্যালোচনাধীন",
-        needs_revision: "সংশোধন প্রয়োজন",
-        approved: "অনুমোদিত",
-        rejected: "প্রত্যাখ্যাত",
-        archived: "সংরক্ষিত",
-    };
-    return labels[status] ?? status;
-}
-
-function statusStyles(status: string): string {
-    const base =
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold";
-
-    switch (status) {
-        case "pending":
-            return `${base} bg-amber-100 text-amber-800`;
-        case "under_review":
-            return `${base} bg-blue-100 text-blue-800`;
-        case "needs_revision":
-            return `${base} bg-orange-100 text-orange-800`;
-        case "approved":
-            return `${base} bg-green-100 text-green-800`;
-        case "rejected":
-            return `${base} bg-red-100 text-red-800`;
-        default:
-            return `${base} bg-zinc-100 text-zinc-800`;
-    }
-}
-
-type StatusOption = {
-    value: string;
-    label: string;
-};
-
-const STATUS_OPTIONS: StatusOption[] = [
-    { value: "", label: "সব" },
-    { value: "pending", label: "নতুন" },
-    { value: "under_review", label: "পর্যালোচনাধীন" },
-    { value: "needs_revision", label: "সংশোধন প্রয়োজন" },
-    { value: "approved", label: "অনুমোদিত" },
-    { value: "rejected", label: "প্রত্যাখ্যাত" },
-];
-
 export const metadata = {
-    title: "অ্যাডমিন ড্যাশবোর্ড",
+    title: "ড্যাশবোর্ড",
 };
 
 export default async function AdminDashboardPage({
@@ -100,6 +36,29 @@ export default async function AdminDashboardPage({
     const offset = (currentPage - 1) * pageSize;
 
     const supabase = await createClient();
+
+    const [
+        pendingResult,
+        approvedResult,
+        rejectedResult,
+    ] = await Promise.all([
+        supabase
+            .from("incidents")
+            .select("id", { count: "exact", head: true })
+            .in("status", ["pending", "under_review", "needs_revision"]),
+        supabase
+            .from("incidents")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "approved"),
+        supabase
+            .from("incidents")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "rejected"),
+    ]);
+
+    const pendingCount = pendingResult.count ?? 0;
+    const approvedCount = approvedResult.count ?? 0;
+    const rejectedCount = rejectedResult.count ?? 0;
 
     let query = supabase
         .from("incidents")
@@ -198,10 +157,57 @@ export default async function AdminDashboardPage({
                 </p>
             </div>
 
-            <div className="mb-6">
-                <Suspense>
-                    <AdminSearchForm />
-                </Suspense>
+            <div className="mb-8 grid gap-4 sm:grid-cols-3">
+                <Link
+                    href="/admin/incidents/pending"
+                    className="rounded-2xl border border-amber-200 bg-amber-50 p-5 transition hover:border-amber-300 hover:shadow-sm"
+                >
+                    <p className="text-sm font-medium text-amber-700">
+                        অপেক্ষমাণ
+                    </p>
+
+                    <p className="mt-2 text-3xl font-bold text-amber-900">
+                        {pendingCount}
+                    </p>
+
+                    <p className="mt-1 text-xs text-amber-600">
+                        পর্যালোচনার অপেক্ষায়
+                    </p>
+                </Link>
+
+                <Link
+                    href="/admin/incidents/approved"
+                    className="rounded-2xl border border-green-200 bg-green-50 p-5 transition hover:border-green-300 hover:shadow-sm"
+                >
+                    <p className="text-sm font-medium text-green-700">
+                        অনুমোদিত
+                    </p>
+
+                    <p className="mt-2 text-3xl font-bold text-green-900">
+                        {approvedCount}
+                    </p>
+
+                    <p className="mt-1 text-xs text-green-600">
+                        প্রকাশিত রিপোর্ট
+                    </p>
+                </Link>
+
+                <Link
+                    href="/admin/incidents/rejected"
+                    className="rounded-2xl border border-red-200 bg-red-50 p-5 transition hover:border-red-300 hover:shadow-sm"
+                >
+                    <p className="text-sm font-medium text-red-700">
+                        প্রত্যাখ্যাত
+                    </p>
+
+                    <p className="mt-2 text-3xl font-bold text-red-900">
+                        {rejectedCount}
+                    </p>
+
+                    <p className="mt-1 text-xs text-red-600">
+                        বাতিলকৃত রিপোর্ট
+                    </p>
+                </Link>
             </div>
 
             <div className="mb-6 flex flex-wrap gap-2">
@@ -257,24 +263,18 @@ export default async function AdminDashboardPage({
                         {statusFilter || searchQuery ? " (ফিল্টার্ড)" : ""}
                     </p>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {incidents.map((incident) => (
                             <Link
                                 key={incident.id}
                                 href={`/admin/incidents/${incident.id}`}
-                                className="block rounded-2xl border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-300 hover:shadow-sm"
+                                className="block rounded-2xl border border-zinc-200 bg-white p-5 transition-colors hover:border-zinc-300 hover:shadow-sm"
                             >
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <span
-                                                className={statusStyles(
-                                                    incident.status,
-                                                )}
-                                            >
-                                                {statusLabel(
-                                                    incident.status,
-                                                )}
+                                            <span className={statusStyles(incident.status)}>
+                                                {statusLabel(incident.status)}
                                             </span>
 
                                             <span className="text-xs text-zinc-400">
@@ -288,37 +288,25 @@ export default async function AdminDashboardPage({
 
                                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-500">
                                             {incident.category ? (
-                                                <span>
-                                                    {incident.category}
-                                                </span>
+                                                <span>{incident.category}</span>
                                             ) : null}
 
-                                            {incident.division &&
-                                            incident.district ? (
+                                            {incident.division && incident.district ? (
                                                 <span>
-                                                    {incident.division} →{" "}
-                                                    {incident.district}
+                                                    {incident.division} → {incident.district}
                                                 </span>
                                             ) : null}
 
                                             {incident.incident_date ? (
                                                 <span>
-                                                    ঘটনার তারিখ:{" "}
-                                                    {formatDate(
-                                                        incident.incident_date,
-                                                    )}
+                                                    ঘটনার তারিখ: {formatDate(incident.incident_date)}
                                                 </span>
                                             ) : null}
                                         </div>
                                     </div>
 
                                     <div className="flex-shrink-0 text-right text-xs text-zinc-400">
-                                        <p>
-                                            জমা:{" "}
-                                            {formatDateTime(
-                                                incident.created_at,
-                                            )}
-                                        </p>
+                                        <p>জমা: {formatDateTime(incident.created_at)}</p>
                                     </div>
                                 </div>
                             </Link>
@@ -329,9 +317,7 @@ export default async function AdminDashboardPage({
                         <div className="mt-8 flex items-center justify-center gap-2">
                             {currentPage > 1 ? (
                                 <Link
-                                    href={buildUrl({
-                                        page: String(currentPage - 1),
-                                    })}
+                                    href={buildUrl({ page: String(currentPage - 1) })}
                                     className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium transition hover:bg-zinc-100"
                                 >
                                     পূর্ববর্তী
@@ -344,9 +330,7 @@ export default async function AdminDashboardPage({
 
                             {currentPage < totalPages ? (
                                 <Link
-                                    href={buildUrl({
-                                        page: String(currentPage + 1),
-                                    })}
+                                    href={buildUrl({ page: String(currentPage + 1) })}
                                     className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium transition hover:bg-zinc-100"
                                 >
                                     পরবর্তী

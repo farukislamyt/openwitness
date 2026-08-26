@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const notoSansBengali = Noto_Sans_Bengali({
   variable: "--font-noto-sans-bengali",
@@ -10,22 +11,64 @@ const notoSansBengali = Noto_Sans_Bengali({
 
 export const metadata: Metadata = {
   title: {
-    default: "OpenWitness",
+    default: "OpenWitness — জনস্বার্থের ঘটনা নথিভুক্ত করুন",
     template: "%s | OpenWitness",
   },
   description:
-    "বাংলাদেশের জন্য একটি anonymous public-interest reporting platform।",
+    "বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform। পরিচয় প্রকাশ না করেই ঘটনা রিপোর্ট করুন।",
+  keywords: [
+    "OpenWitness",
+    "anonymous reporting",
+    "জনস্বার্থ",
+    "বাংলাদেশ",
+    "ঘটনা রিপোর্ট",
+    "দুর্নীতি",
+    "প্রতারণা",
+    "সাইবার অপরাধ",
+  ],
   applicationName: "OpenWitness",
-  authors: [{ name: "Faruk Islam" }],
-  creator: "Faruk Islam",
+  authors: [{ name: "OpenWitness" }],
+  creator: "OpenWitness",
   publisher: "OpenWitness",
-  metadataBase: new URL("https://openwitness.vercel.app"),
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL("https://openwitness.org"),
   alternates: {
     canonical: "/",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "bn_BD",
+    url: "https://openwitness.org",
+    siteName: "OpenWitness",
+    title: "OpenWitness — জনস্বার্থের ঘটনা নথিভুক্ত করুন",
+    description:
+      "বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform। পরিচয় প্রকাশ না করেই ঘটনা রিপোর্ট করুন।",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OpenWitness — জনস্বার্থের ঘটনা নথিভুক্ত করুন",
+    description:
+      "বাংলাদেশের জনস্বার্থে একটি anonymous reporting platform।",
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
   },
 };
 
@@ -35,9 +78,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="bn">
-      <body className={`${notoSansBengali.variable} antialiased`}>
+    <html lang="bn" className="scroll-smooth">
+      <body
+        className={`${notoSansBengali.variable} font-sans antialiased`}
+      >
         {children}
+        <ScrollToTop />
       </body>
     </html>
   );

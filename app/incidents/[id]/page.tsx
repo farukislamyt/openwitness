@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import FlagForm from "./FlagForm";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 type IncidentDetail = {
     id: string;
@@ -20,24 +21,6 @@ type IncidentDetail = {
     district: string | null;
     district_slug: string | null;
 };
-
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-}
-
-function formatDateTime(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
 
 function verificationLabel(status: string): string {
     switch (status) {

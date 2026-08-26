@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import ReviewReportButton from "./ReviewReportButton";
+import { formatShortDate } from "@/lib/format";
 
 type SupabaseReportRow = {
     id: string;
@@ -46,16 +47,6 @@ function reasonLabel(reason: string): string {
         default:
             return reason;
     }
-}
-
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
 }
 
 export const metadata = {
@@ -190,7 +181,7 @@ export default async function AdminReportsPage() {
                                             ) : null}
 
                                             <span>
-                                                {formatDate(
+                                                {formatShortDate(
                                                     report.created_at,
                                                 )}
                                             </span>

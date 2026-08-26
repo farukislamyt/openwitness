@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import AdminUserForm from "./AdminUserForm";
+import { formatShortDate } from "@/lib/format";
 
 type AdminUserRow = {
     id: string;
@@ -10,14 +11,6 @@ type AdminUserRow = {
     created_at: string;
     updated_at: string;
 };
-
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
-}
 
 function roleLabel(role: string): string {
     switch (role) {
@@ -140,11 +133,11 @@ export default async function AdminUsersPage() {
 
                                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400">
                                         <span>
-                                            তৈরি: {formatDate(user.created_at)}
+                                            তৈরি: {formatShortDate(user.created_at)}
                                         </span>
 
                                         <span>
-                                            আপডেট: {formatDate(user.updated_at)}
+                                            আপডেট: {formatShortDate(user.updated_at)}
                                         </span>
                                     </div>
                                 </div>

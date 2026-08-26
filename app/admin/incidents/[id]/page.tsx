@@ -2,6 +2,14 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ModerateButton from "./ModerateButton";
+import { formatDate, formatDateTime } from "@/lib/format";
+import {
+    statusLabel,
+    statusStyles,
+    verificationLabel,
+    actionLabel,
+    actionStyles,
+} from "@/lib/admin-utils";
 
 type IncidentDetail = {
     id: string;
@@ -29,70 +37,6 @@ type ModerationRow = {
     created_at: string;
     admin_user: { display_name: string } | null;
 };
-
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-}
-
-function formatDateTime(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("bn-BD", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
-function statusLabel(status: string): string {
-    const labels: Record<string, string> = {
-        pending: "নতুন",
-        under_review: "পর্যালোচনাধীন",
-        needs_revision: "সংশোধন প্রয়োজন",
-        approved: "অনুমোদিত",
-        rejected: "প্রত্যাখ্যাত",
-        archived: "সংরক্ষিত",
-    };
-    return labels[status] ?? status;
-}
-
-function statusStyles(status: string): string {
-    const base =
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold";
-
-    switch (status) {
-        case "pending":
-            return `${base} bg-amber-100 text-amber-800`;
-        case "under_review":
-            return `${base} bg-blue-100 text-blue-800`;
-        case "needs_revision":
-            return `${base} bg-orange-100 text-orange-800`;
-        case "approved":
-            return `${base} bg-green-100 text-green-800`;
-        case "rejected":
-            return `${base} bg-red-100 text-red-800`;
-        default:
-            return `${base} bg-zinc-100 text-zinc-800`;
-    }
-}
-
-function actionLabel(action: string): string {
-    const labels: Record<string, string> = {
-        started_review: "পর্যালোচনা শুরু",
-        approved: "অনুমোদিত",
-        rejected: "প্রত্যাখ্যাত",
-        needs_revision: "সংশোধন প্রয়োজন",
-        archived: "সংরক্ষিত",
-        edited: "সম্পাদিত",
-        redacted: "সরানো হয়েছে",
-        restored: "পুনরুদ্ধার",
-    };
-    return labels[action] ?? action;
-}
 
 export default async function IncidentReviewPage({
     params,
@@ -229,11 +173,7 @@ export default async function IncidentReviewPage({
                 <div className="lg:col-span-2">
                     <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8">
                         <div className="flex flex-wrap items-center gap-3">
-                            <span
-                                className={statusStyles(
-                                    incident.status,
-                                )}
-                            >
+                            <span className={statusStyles(incident.status)}>
                                 {statusLabel(incident.status)}
                             </span>
 
@@ -256,14 +196,12 @@ export default async function IncidentReviewPage({
                                 </div>
                             ) : null}
 
-                            {incident.division &&
-                            incident.district ? (
+                            {incident.division && incident.district ? (
                                 <div>
                                     <span className="font-medium text-zinc-700">
                                         অবস্থান:
                                     </span>{" "}
-                                    {incident.division} →{" "}
-                                    {incident.district}
+                                    {incident.division} → {incident.district}
                                 </div>
                             ) : null}
 
@@ -272,9 +210,7 @@ export default async function IncidentReviewPage({
                                     <span className="font-medium text-zinc-700">
                                         ঘটনার তারিখ:
                                     </span>{" "}
-                                    {formatDate(
-                                        incident.incident_date,
-                                    )}
+                                    {formatDate(incident.incident_date)}
                                 </div>
                             ) : null}
                         </div>
@@ -296,16 +232,7 @@ export default async function IncidentReviewPage({
                                 </p>
 
                                 <p className="mt-1 text-sm font-semibold">
-                                    {incident.verification_status ===
-                                    "reported"
-                                        ? "প্রতিবেদিত"
-                                        : incident.verification_status ===
-                                          "verified"
-                                          ? "যাচাইকৃত"
-                                          : incident.verification_status ===
-                                            "disputed"
-                                            ? "বিতর্কিত"
-                                            : incident.verification_status}
+                                    {verificationLabel(incident.verification_status)}
                                 </p>
                             </div>
 
@@ -315,9 +242,7 @@ export default async function IncidentReviewPage({
                                 </p>
 
                                 <p className="mt-1 text-sm font-semibold">
-                                    {formatDateTime(
-                                        incident.created_at,
-                                    )}
+                                    {formatDateTime(incident.created_at)}
                                 </p>
                             </div>
 
@@ -327,9 +252,7 @@ export default async function IncidentReviewPage({
                                 </p>
 
                                 <p className="mt-1 text-sm font-semibold">
-                                    {formatDateTime(
-                                        incident.updated_at,
-                                    )}
+                                    {formatDateTime(incident.updated_at)}
                                 </p>
                             </div>
 
@@ -340,9 +263,7 @@ export default async function IncidentReviewPage({
                                     </p>
 
                                     <p className="mt-1 text-sm font-semibold">
-                                        {formatDateTime(
-                                            incident.published_at,
-                                        )}
+                                        {formatDateTime(incident.published_at)}
                                     </p>
                                 </div>
                             ) : null}
@@ -387,23 +308,20 @@ export default async function IncidentReviewPage({
                                         key={modAction.id}
                                         className="border-l-2 border-zinc-200 pl-4"
                                     >
-                                        <p className="text-sm font-semibold">
-                                            {actionLabel(
-                                                modAction.action,
-                                            )}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <span className={actionStyles(modAction.action)}>
+                                                {actionLabel(modAction.action)}
+                                            </span>
+                                        </div>
 
                                         {modAction.admin_user ? (
-                                            <p className="text-xs text-zinc-500">
-                                                {modAction.admin_user
-                                                    .display_name}
+                                            <p className="mt-1 text-xs text-zinc-500">
+                                                {modAction.admin_user.display_name}
                                             </p>
                                         ) : null}
 
                                         <p className="text-xs text-zinc-400">
-                                            {formatDateTime(
-                                                modAction.created_at,
-                                            )}
+                                            {formatDateTime(modAction.created_at)}
                                         </p>
 
                                         {modAction.notes ? (
